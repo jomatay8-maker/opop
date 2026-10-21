@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ky" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MBANK - Мобилдик Банк</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        mbank: {
+                            50: '#EBF4FF',
+                            100: '#D6E8FF',
+                            200: '#ADD1FF',
+                            500: '#0057FF',
+                            600: '#0048D9',
+                            700: '#0036A3',
+                            cyan: '#00D2FF',
+                            dark: '#090E1D',
+                            cardDark: '#131A31'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230057FF'/><text x='50%' y='68%' font-size='60' font-weight='900' fill='white' text-anchor='middle' font-family='sans-serif'>M</text></svg>">
+</head>
+<body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300">
+
+    <!-- Top Desktop Control Bar (for developer & testing convenience) -->
+    <header class="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-2 z-50">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-mbank-500 text-white font-black flex items-center justify-center text-base shadow-md shadow-blue-500/30">
+                    M
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+                        MBANK <span class="text-xs font-normal text-slate-400">| Кыргызстан</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Mode Controls -->
+            <div class="flex items-center gap-2">
+                <button id="toggle-frame-mode" onclick="mbank.toggleFrameMode()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 tap-effect transition flex items-center gap-1.5">
+                    📱 <span class="hidden sm:inline">Телефон режими</span>
+                </button>
+                <button onclick="mbank.openModal('topup-modal')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold tap-effect transition shadow-sm">
+                    + Баланс толуктоо
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Simulator Wrapper -->
+    <main id="device-wrapper" class="max-w-md mx-auto py-6 px-2 transition-all duration-300">
+        
+        <!-- Smartphone Mockup Body -->
+        <div id="phone-frame" class="phone-mockup-frame min-h-[860px] max-h-[92vh] bg-slate-50 dark:bg-[#0C101C] relative flex flex-col border border-slate-300 dark:border-slate-800 shadow-2xl overflow-hidden">
+            
+            <!-- Dynamic Island / Notification Banner -->
+            <div id="dynamic-island" class="dynamic-island cursor-pointer tap-effect" onclick="this.classList.toggle('expanded')">
+                <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-800"></div>
+                <div id="island-content" class="overflow-hidden flex-1 flex items-center justify-center">
+                    <span class="text-[9px] font-black text-cyan-400 tracking-wider">MBANK</span>
+                </div>
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 animate-pulse"></div>
+            </div>
+
+            <!-- Mobile Status Bar -->
+            <div class="pt-3 px-6 pb-1 flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 select-none z-30">
+                <span id="current-clock">15:46</span>
+                <div class="flex items-center gap-1.5 text-xs">
+                    <span class="text-[10px] font-extrabold text-blue-600 dark:text-cyan-400">5G</span>
+                    <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+                    <i data-lucide="battery" class="w-4 h-4 text-emerald-500"></i>
+                </div>
+            </div>
+
+            <!-- In-App Header -->
+            <div id="app-header" class="relative z-20"></div>
+
+            <!-- Scrollable Tab Content Viewport -->
+            <div id="tab-content" class="flex-1 overflow-y-auto no-scrollbar relative z-10 pt-2">
+                <!-- Dynamically injected via app.js -->
+            </div>
+
+            <!-- Bottom Navigation Bar -->
+            <nav id="bottom-nav" class="sticky bottom-0 z-30"></nav>
+
+            <!-- ============================================ -->
+            <!-- PIN LOCK SCREEN OVERLAY -->
+            <!-- ============================================ -->
+            <div id="pin-screen" class="absolute inset-0 z-50 bg-gradient-to-b from-slate-950 via-[#090E1D] to-black text-white flex flex-col justify-between p-6 transition-all duration-300 select-none">
+                <!-- Top Brand -->
+                <div class="text-center pt-8">
+                    <div class="w-16 h-16 rounded-3xl bg-blue-600 text-white font-black text-3xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/50 mb-3 border border-white/20">
+                        M
+                    </div>
+                    <h2 class="text-xl font-black tracking-tight">MBANK</h2>
+                    <p class="text-xs text-slate-400 mt-1">ОАО «Коммерческий банк КЫРГЫЗСТАН»</p>
+                </div>
+
+                <!-- PIN Dots Display -->
+                <div class="text-center my-4">
+                    <div class="text-sm font-bold text-slate-300 mb-4">MBANK PIN кодун териңиз</div>
+                    <div class="flex items-center justify-center gap-4">
+                        <div id="pin-dot-1" class="w-3.5 h-3.5 rounded-full bg-white/20 transition-all duration-200"></div>
+                        <div id="pin-dot-2" class="w-3.5 h-3.5 rounded-full bg-white/20 transition-all duration-200"></div>
+                        <div id="pin-dot-3" class="w-3.5 h-3.5 rounded-full bg-white/20 transition-all duration-200"></div>
+                        <div id="pin-dot-4" class="w-3.5 h-3.5 rounded-full bg-white/20 transition-all duration-200"></div>
+                    </div>
+                    <div class="text-[11px] text-cyan-400/80 font-medium mt-3">
+                        (Тест үчүн PIN: <strong>1234</strong> же Face ID басыңыз)
+                    </div>
+                </div>
+
+                <!-- Numpad Keypad -->
+                <div class="max-w-xs mx-auto w-full grid grid-cols-3 gap-4 pb-4">
+                    <button onclick="handlePinPress('1')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">1</button>
+                    <button onclick="handlePinPress('2')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">2</button>
+                    <button onclick="handlePinPress('3')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">3</button>
+
+                    <button onclick="handlePinPress('4')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">4</button>
+                    <button onclick="handlePinPress('5')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">5</button>
+                    <button onclick="handlePinPress('6')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">6</button>
+
+                    <button onclick="handlePinPress('7')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">7</button>
+                    <button onclick="handlePinPress('8')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">8</button>
+                    <button onclick="handlePinPress('9')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">9</button>
+
+                    <!-- FaceID / Biometric Button -->
+                    <button onclick="handleBiometricLogin()" title="Face ID / Манжа изи" class="h-16 rounded-3xl bg-blue-600/30 hover:bg-blue-600/50 text-cyan-300 flex items-center justify-center tap-effect transition">
+                        <i id="biometric-icon" data-lucide="scan-face" class="w-7 h-7"></i>
+                    </button>
+                    <button onclick="handlePinPress('0')" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 active:bg-cyan-500/30 text-2xl font-bold flex items-center justify-center tap-effect transition">0</button>
+                    <!-- Backspace Button -->
+                    <button onclick="handlePinDelete()" class="h-16 rounded-3xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center tap-effect transition">
+                        <i data-lucide="delete" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div class="text-center pb-2">
+                    <button onclick="mbank.unlockApp()" class="text-xs text-slate-400 hover:text-white underline tap-effect">
+                        Тез кирүү (PIN өткөрүп жиберүү)
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ============================================ -->
+    <!-- MODALS SECTION -->
+    <!-- ============================================ -->
+
+    <!-- 1. Official MBANK Receipt Modal -->
+    <div id="receipt-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="relative w-full max-w-sm max-h-[90vh] overflow-y-auto no-scrollbar">
+            <button onclick="mbank.closeModal('receipt-modal')" class="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center tap-effect">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <div id="receipt-content"></div>
+        </div>
+    </div>
+
+    <!-- 2. Balance Top Up Modal -->
+    <div id="topup-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xs">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    </span>
+                    Балансты толуктоо
+                </h3>
+                <button onclick="mbank.closeModal('topup-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Толуктоо ыкмасы:</label>
+                    <select class="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none">
+                        <option>Башка банктын картасынан (P2P)</option>
+                        <option>Pay24 / O! / MegaPay терминалынан</option>
+                        <option>MBANK кассасынан накталай</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Сумма (сом):</label>
+                    <input id="topup-amount-input" type="number" value="5000" class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-lg font-black text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="document.getElementById('topup-amount-input').value = 1000" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold tap-effect">+1 000</button>
+                    <button onclick="document.getElementById('topup-amount-input').value = 5000" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold tap-effect">+5 000</button>
+                    <button onclick="document.getElementById('topup-amount-input').value = 20000" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold tap-effect">+20 000</button>
+                </div>
+
+                <button onclick="mbank.topUpAccount('acc_mbank_black', document.getElementById('topup-amount-input').value)" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs tap-effect shadow-lg shadow-emerald-600/30">
+                    Балансты толуктоо (0% комиссия)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MBANK Online Loan Modal (Насыя 1 мүнөттө) -->
+    <div id="loan-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xs font-black">⚡</span>
+                        MBANK Онлайн Насыя
+                    </h3>
+                    <p class="text-[10px] text-slate-400">1 мүнөттө картага түшүрүү</p>
+                </div>
+                <button onclick="mbank.closeModal('loan-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Loan Slider -->
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-slate-400 font-semibold">Сумма:</span>
+                        <span id="loan-slider-val" class="text-lg font-black text-blue-600 dark:text-cyan-400">50 000 сом</span>
+                    </div>
+                    <input id="loan-amount-slider" type="range" min="5000" max="250000" step="5000" value="50000" oninput="updateLoanCalc()" class="w-full accent-blue-600 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span>5 000 с</span>
+                        <span>250 000 с</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-xs text-slate-400 font-semibold mb-2">Мөөнөтү (ай):</div>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="selectLoanMonths(3)" id="loan-m-3" class="loan-month-btn py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700">3 ай</button>
+                        <button onclick="selectLoanMonths(6)" id="loan-m-6" class="loan-month-btn py-2 rounded-xl text-xs font-bold border border-blue-600 bg-blue-600 text-white">6 ай</button>
+                        <button onclick="selectLoanMonths(12)" id="loan-m-12" class="loan-month-btn py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700">12 ай</button>
+                        <button onclick="selectLoanMonths(24)" id="loan-m-24" class="loan-month-btn py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700">24 ай</button>
+                    </div>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Айлык төлөм:</span>
+                        <span id="loan-calc-monthly" class="font-black text-slate-900 dark:text-white">9 083 сом</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Үстөк пайыз:</span>
+                        <span class="font-bold text-emerald-600">Жылдык 18%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Комиссия жана төлөм:</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300">0 сом</span>
+                    </div>
+                </div>
+
+                <button onclick="executeLoanApplication()" class="w-full py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs tap-effect shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    Насыяны алуу (1 мүнөттө картага)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Universal Service Payment Modal -->
+    <div id="service-pay-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 id="service-pay-title" class="text-base font-black text-slate-900 dark:text-white">Кызмат төлөмү</h3>
+                    <span id="service-pay-cashback" class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold">Кешбэк: 1.5%</span>
+                </div>
+                <button onclick="mbank.closeModal('service-pay-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Лицевой счет / Номер / Логин:</label>
+                    <input id="service-account-number" type="text" placeholder="Мисалы: 10482012" value="984210" class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Төлөм суммасы (сом):</label>
+                    <input id="service-pay-amount" type="number" placeholder="0.00" value="850" class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-lg font-black text-slate-900 dark:text-white outline-none focus:border-blue-500">
+                </div>
+
+                <button onclick="mbank.executeServicePayment()" class="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs tap-effect shadow-lg shadow-blue-500/30">
+                    Төлөөнү ырастоо
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. MBonus Modal -->
+    <div id="mbonus-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">💎</span>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white">MBonus Программасы</h3>
+                </div>
+                <button onclick="mbank.closeModal('mbonus-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 text-center">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Сиздин топтолгон бонустарыңыз:</div>
+                <div class="text-3xl font-black text-blue-600 dark:text-cyan-400 my-1">
+                    1 450,00 с
+                </div>
+                <div class="text-[10px] text-slate-400">1 MBonus = 1 СОМ (Каалаган кызматты төлөсө болот)</div>
+            </div>
+
+            <div class="space-y-2 text-xs">
+                <div class="font-bold text-slate-700 dark:text-slate-300">Өнөктөштөрдөн кешбэк:</div>
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800">
+                    <span>🛒 Globus / Народный</span>
+                    <span class="font-black text-emerald-600">3%</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800">
+                    <span>⛽ Газпромнефть АЗС</span>
+                    <span class="font-black text-emerald-600">2%</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800">
+                    <span>☕ Bellagio / Sierra Coffee</span>
+                    <span class="font-black text-emerald-600">5%</span>
+                </div>
+            </div>
+
+            <button onclick="mbank.closeModal('mbonus-modal')" class="w-full py-3 rounded-2xl bg-blue-600 text-white font-bold text-xs tap-effect">
+                Түшүнүктүү
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. Currency Converter Modal -->
+    <div id="currency-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-xl">💱</span> Валюта конвертери
+                </h3>
+                <button onclick="mbank.closeModal('currency-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">САТЫП АЛАМ (USD):</label>
+                    <input id="converter-usd" type="number" value="100" oninput="convertCurrency('usd')" class="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base font-black text-slate-900 dark:text-white outline-none">
+                </div>
+
+                <div class="text-center text-slate-400 text-xs font-bold">
+                    ⇅ MBANK Курсу: 87.90 сом
+                </div>
+
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold block mb-1">ТӨЛӨЙМ (СОМ):</label>
+                    <input id="converter-kgs" type="number" value="8790" oninput="convertCurrency('kgs')" class="w-full p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-base font-black text-blue-600 dark:text-cyan-400 outline-none">
+                </div>
+            </div>
+
+            <button onclick="mbank.closeModal('currency-modal')" class="w-full py-3 rounded-2xl bg-blue-600 text-white font-bold text-xs tap-effect">
+                Жабуу
+            </button>
+        </div>
+    </div>
+
+    <!-- 7. Deposit Modal (М-Депозит) -->
+    <div id="deposit-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-xl">🏦</span> М-Депозит (Топтоо)
+                </h3>
+                <button onclick="mbank.closeModal('deposit-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30">
+                <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Учурдагы депозит:</div>
+                <div class="text-2xl font-black text-emerald-600 dark:text-emerald-400 my-1">
+                    250 000,00 с
+                </div>
+                <div class="text-xs font-bold text-slate-700 dark:text-slate-300">Жылдык пайда: 14.5%</div>
+                <div class="text-[10px] text-slate-400 mt-1">Каалаган убакта толуктап жана чыгарып алса болот.</div>
+            </div>
+
+            <button onclick="mbank.showToast('Депозит толукталды!'); mbank.closeModal('deposit-modal')" class="w-full py-3 rounded-2xl bg-emerald-600 text-white font-bold text-xs tap-effect">
+                Депозитти толуктоо
+            </button>
+        </div>
+    </div>
+
+    <!-- 8. Notifications Center Modal -->
+    <div id="notifications-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="bell" class="w-5 h-5 text-blue-600"></i> Билдирүүлөр
+                </h3>
+                <button onclick="mbank.closeModal('notifications-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2.5 max-h-64 overflow-y-auto no-scrollbar text-xs">
+                <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-800">
+                    <div class="font-bold text-slate-900 dark:text-white">🎉 Акция: MBonus 10% кешбэк!</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Супермаркеттерден MBANK QR менен төлөп, 10% кешбэк алыңыз.</div>
+                    <div class="text-[9px] text-slate-400 mt-1">Бүгүн, 12:00</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-800">
+                    <div class="font-bold text-slate-900 dark:text-white">💰 Айлык акы түштү</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">+85 000 сом эсебиңизге ийгиликтүү чегерилди.</div>
+                    <div class="text-[9px] text-slate-400 mt-1">Бүгүн, 11:15</div>
+                </div>
+            </div>
+
+            <button onclick="mbank.closeModal('notifications-modal')" class="w-full py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs tap-effect">
+                Жабуу
+            </button>
+        </div>
+    </div>
+
+    <!-- 9. Card Options Modal (Freeze & Limits) -->
+    <div id="card-options-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-black text-slate-900 dark:text-white">Картаны башкаруу</h3>
+                <button onclick="mbank.closeModal('card-options-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <button onclick="mbank.toggleFreezeCard('acc_mbank_black'); mbank.closeModal('card-options-modal')" class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/60 font-bold flex items-center justify-between tap-effect transition">
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="snowflake" class="w-4 h-4 text-cyan-500"></i> Картаны бөгөттөө (Заморозка)
+                    </span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </button>
+
+                <button onclick="mbank.showToast('Интернет төлөм лимити: 50 000 сом'); mbank.closeModal('card-options-modal')" class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/60 font-bold flex items-center justify-between tap-effect transition">
+                    <span class="flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-blue-500"></i> Лимиттер жана чектөөлөр
+                    </span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </button>
+
+                <button onclick="mbank.showToast('Жаңы виртуалдык карта түзүлдү!'); mbank.closeModal('card-options-modal')" class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center justify-center gap-2 tap-effect transition shadow-md shadow-blue-500/25">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Жаңы виртуалдык карта ачуу
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 10. Story Fullscreen Modal -->
+    <div id="story-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl overflow-hidden bg-slate-900 border border-slate-700 shadow-2xl relative">
+            <button onclick="mbank.closeModal('story-modal')" class="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center tap-effect">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="h-96 relative">
+                <img id="story-modal-img" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 right-6 text-white space-y-1">
+                    <h3 id="story-modal-title" class="text-xl font-black">Story Title</h3>
+                    <p id="story-modal-sub" class="text-xs text-slate-300">Subtitle</p>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-950 text-center">
+                <button onclick="mbank.closeModal('story-modal'); mbank.switchTab('transfers')" class="w-full py-3 rounded-2xl bg-blue-600 text-white font-bold text-xs tap-effect">
+                    Толук көрүү
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 11. About Bank Modal -->
+    <div id="about-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-black text-slate-900 dark:text-white">MBANK тууралуу</h3>
+                <button onclick="mbank.closeModal('about-modal')" class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center tap-effect">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                <p><strong>ОАО «Коммерческий банк КЫРГЫЗСТАН» (MBANK)</strong> — Кыргызстандагы эң ири санариптик экосистема жана банк.</p>
+                <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 font-mono text-[11px] space-y-1">
+                    <div>НБКР Лицензия № 014</div>
+                    <div>Колдоо кызматы: <strong>*3333</strong> (24/7 акысыз)</div>
+                    <div>Расмий сайт: mbank.kg</div>
+                </div>
+            </div>
+
+            <button onclick="mbank.closeModal('about-modal')" class="w-full py-3 rounded-2xl bg-blue-600 text-white font-bold text-xs tap-effect">
+                Жабуу
+            </button>
+        </div>
+    </div>
+
+    <!-- Helper script for loan & currency calculations -->
+    <script>
+        let selectedLoanTerm = 6;
+        function updateLoanCalc() {
+            const amount = parseFloat(document.getElementById('loan-amount-slider').value);
+            document.getElementById('loan-slider-val').innerText = amount.toLocaleString('ru-RU') + " сом";
+            const monthlyInterest = 0.015;
+            const total = amount * (1 + monthlyInterest * selectedLoanTerm);
+            const monthly = Math.round(total / selectedLoanTerm);
+            document.getElementById('loan-calc-monthly').innerText = monthly.toLocaleString('ru-RU') + " сом";
+        }
+
+        function selectLoanMonths(months) {
+            selectedLoanTerm = months;
+            document.querySelectorAll('.loan-month-btn').forEach(b => {
+                b.className = "loan-month-btn py-2 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700";
+            });
+            const activeBtn = document.getElementById(`loan-m-${months}`);
+            if (activeBtn) {
+                activeBtn.className = "loan-month-btn py-2 rounded-xl text-xs font-bold border border-blue-600 bg-blue-600 text-white";
+            }
+            updateLoanCalc();
+        }
+
+        function executeLoanApplication() {
+            const amount = parseFloat(document.getElementById('loan-amount-slider').value);
+            mbank.applyLoan(amount, selectedLoanTerm);
+        }
+
+        function convertCurrency(source) {
+            const rate = 87.90;
+            const usdInput = document.getElementById('converter-usd');
+            const kgsInput = document.getElementById('converter-kgs');
+            if (source === 'usd') {
+                kgsInput.value = (parseFloat(usdInput.value || 0) * rate).toFixed(2);
+            } else {
+                usdInput.value = (parseFloat(kgsInput.value || 0) / rate).toFixed(2);
+            }
+        }
+
+        // Live Clock updater
+        setInterval(() => {
+            const clockEl = document.getElementById('current-clock');
+            if (clockEl) {
+                const now = new Date();
+                clockEl.innerText = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            }
+        }, 1000);
+    </script>
+
+    <!-- Application Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
